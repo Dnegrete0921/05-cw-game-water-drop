@@ -25,12 +25,30 @@ Fonts:
 }
 
 body {
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #f0f0f0;
-    font-family: Arial, sans-serif;
+    padding: 24px;
+    background:
+        radial-gradient(circle at top left, rgba(255, 201, 7, 0.22), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(46, 157, 247, 0.2), transparent 28%),
+        linear-gradient(135deg, #f5fbff 0%, #eaf6ff 45%, #fdfcf7 100%);
+    font-family: "Trebuchet MS", "Verdana", sans-serif;
+    color: #13212f;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.18) 1px, transparent 1px);
+    background-size: 28px 28px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.45), transparent 88%);
+    pointer-events: none;
 }
 
 .game-wrapper {
@@ -38,88 +56,204 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 20px;
+    width: min(920px, 100%);
+    padding: 28px;
+    border: 1px solid rgba(19, 33, 47, 0.08);
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 20px 60px rgba(19, 33, 47, 0.12);
+    backdrop-filter: blur(12px);
+}
+
+.game-message {
+    min-height: 1.5em;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(19, 33, 47, 0.08);
+    min-height: 1.5em;
+    font-size: 20px;
+    font-weight: 700;
+    color: #174a7c;
+    text-align: center;
 }
 
 .score-panel {
     display: flex;
     justify-content: space-between;  /* Space between score and button */
     align-items: center;
-    width: 800px;
-    padding: 10px;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    gap: 16px;
+    width: min(800px, 100%);
+    padding: 16px 18px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(245, 249, 255, 0.95));
+    border: 1px solid rgba(19, 33, 47, 0.08);
+    border-radius: 18px;
+    box-shadow: 0 10px 25px rgba(19, 33, 47, 0.08);
 }
 
 .timer {
     flex: 0 1 auto;
-    font-size: 24px;
-    font-weight: bold;
+    font-size: 22px;
+    font-weight: 700;
+    color: #174a7c;
 }
 
 #game-container {
-    width: 800px;
+    width: min(800px, 100%);
     height: 600px;
-    background-color: #e6f7ff;
-    border: 2px solid #333;
-    border-radius: 8px;
+    background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.4), transparent 36%),
+        linear-gradient(180deg, #dff4ff 0%, #d0eeff 36%, #c6e8f7 100%);
+    border: 1px solid rgba(19, 33, 47, 0.14);
+    border-radius: 22px;
     position: relative;
     overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 14px 35px rgba(19, 33, 47, 0.12);
+}
+
+.win-effect {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 4;
+}
+
+.confetti-piece {
+    position: absolute;
+    top: -18px;
+    width: 10px;
+    height: 16px;
+    border-radius: 999px;
+    opacity: 0;
+    animation-name: confettiFall;
+    animation-timing-function: cubic-bezier(0.18, 0.7, 0.2, 1);
+    animation-fill-mode: forwards;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.water-can {
+    position: absolute;
+    bottom: 0;
+    width: 150px;
+    z-index: 2;
+    pointer-events: none;
+    user-select: none;
 }
 
 
 #start-btn {
     padding: 8px 16px;
-    background-color: #4CAF50;
+    background: linear-gradient(180deg, #5fd36a 0%, #33a84a 100%);
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
+    font-weight: 700;
+    box-shadow: 0 8px 16px rgba(51, 168, 74, 0.22);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
 
 #start-btn:hover {
-    background-color: #45a049;
+    filter: brightness(1.04);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 18px rgba(51, 168, 74, 0.28);
+}
+
+#reset-btn {
+    padding: 8px 16px;
+    background: linear-gradient(180deg, #ffffff 0%, #edf4fb 100%);
+    color: #174a7c;
+    border: 1px solid rgba(23, 74, 124, 0.18);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    box-shadow: 0 8px 16px rgba(19, 33, 47, 0.08);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+#reset-btn:hover {
+    filter: brightness(1.02);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 18px rgba(19, 33, 47, 0.12);
+}
+
+#start-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
 .score {
     flex: 0 1 auto;  /* Don't grow, can shrink, auto basis */
-    font-size: 24px;
-    font-weight: bold;
+    font-size: 22px;
+    font-weight: 700;
+    color: #13212f;
 }
 
 .water-drop {
     position: absolute;
     width: 60px;  /* increased from 40px */
     height: 60px; /* increased from 40px */
-    background-color: #0099ff;
-    border-radius: 50%;
+    background: transparent;
     animation: dropFall linear forwards;
     transform-origin: center;
     cursor: pointer;
-    padding: 15px;  /* Add padding for larger click area */
-    margin: -15px;  /* Offset padding to maintain visual size */
-    transition: transform 0.1s ease;  /* Smooth hover effect */
+    z-index: 3;
 }
 
 .water-drop:hover {
-    transform: scale(1.1);  /* Slight grow effect on hover */
+    transform: scale(1.05);  /* Slight grow effect on hover */
 }
 
-.bad-drop {
-    background-color: #ff4444;
+.water-drop::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #8bd1ff 0%, #2e9df7 55%, #157fd1 100%);
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(135deg);
+    box-shadow: inset -10px -10px 16px rgba(0, 0, 0, 0.12),
+        inset 8px 8px 10px rgba(255, 255, 255, 0.3),
+        0 6px 10px rgba(46, 157, 247, 0.25);
+}
+
+.water-drop::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 12px;
+    left: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.45);
+    filter: blur(1px);
+}
+
+.water-drop.bad-drop::before {
+    background: linear-gradient(180deg, #c8ffb0 0%, #4fcb53 55%, #159a48 100%);
+    box-shadow: inset -10px -10px 16px rgba(0, 0, 0, 0.12),
+        inset 8px 8px 10px rgba(255, 255, 255, 0.28),
+        0 6px 10px rgba(79, 203, 83, 0.28);
+}
+
+.water-drop.bad-drop::after {
+    background: rgba(255, 255, 255, 0.38);
 }
 
 .game-title {
-    color: #131313;
-    font-size: 48px;
+    color: #153d62;
+    font-size: clamp(42px, 4vw, 58px);
     margin-top: 0;
     margin-bottom: 5px;  /* reduced from 20px */
     text-align: center;
+    letter-spacing: 0.02em;
+    text-shadow: 0 2px 0 rgba(255, 255, 255, 0.65);
 }
 
 .game-tagline {
-    color: #666;
+    color: #4a6073;
     font-size: 18px;
     margin-bottom: 20px;
     text-align: center;
@@ -134,6 +268,20 @@ body {
     }
 }
 
+@keyframes confettiFall {
+    0% {
+        opacity: 0;
+        transform: translate3d(0, 0, 0) rotate(0deg) scale(0.7);
+    }
+    12% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translate3d(var(--x-drift, 0), 640px, 0) rotate(var(--rotation, 360deg)) scale(1);
+    }
+}
+
 @media (max-width: 850px) {
     .game-wrapper, .score-panel, #game-container {
         width: 95vw;
@@ -141,5 +289,15 @@ body {
     
     #game-container {
         height: 70vh;
+    }
+
+    .game-wrapper {
+        padding: 18px;
+        border-radius: 22px;
+    }
+
+    .score-panel {
+        flex-wrap: wrap;
+        justify-content: center;
     }
 }

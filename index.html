@@ -10,13 +10,22 @@
     <div class="game-wrapper">
         <h1 class="game-title">Water Drop</h1>
         <p class="game-tagline">Catch the good drops, avoid the bad ones!</p>
+        <p class="game-tagline">Get 20 drops to win!</p>
         <div class="score-panel">
             <div class="score">Score: <span id="score">0</span></div>
             <div class="timer">Time: <span id="time">30</span>s</div>
             <button id="start-btn">Start Game</button>
+            <button id="reset-btn">Reset</button>
         </div>
+        <p id="game-message" class="game-message" aria-live="polite"></p>
         
         <div id="game-container">
+            <img
+                id="water-can"
+                class="water-can"
+                src="img/water-can-transparent.png"
+                alt="Water can catcher"
+            >
         </div>
     </div>
     
