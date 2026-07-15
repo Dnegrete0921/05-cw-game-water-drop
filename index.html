@@ -4,16 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Water Drop Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="game-wrapper">
         <h1 class="game-title">Water Drop</h1>
         <p class="game-tagline">Catch the good drops, avoid the bad ones!</p>
-        <p class="game-tagline">Get 20 drops to win!</p>
+        <p id="goal-text" class="game-tagline">Get 20 drops to win!</p>
         <div class="score-panel">
             <div class="score">Score: <span id="score">0</span></div>
             <div class="timer">Time: <span id="time">30</span>s</div>
+            <label class="difficulty-control" for="difficulty-select">
+                Difficulty
+                <select id="difficulty-select" aria-label="Select difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </label>
             <button id="start-btn">Start Game</button>
             <button id="reset-btn">Reset</button>
         </div>
@@ -28,6 +39,15 @@
             >
         </div>
     </div>
+
+    <footer class="cw-footer">
+        <p>Learn more about charity: water and help fund clean water projects.</p>
+        <div class="cw-links">
+            <a href="https://www.charitywater.org/" target="_blank" rel="noopener noreferrer">charity: water</a>
+            <a href="https://www.charitywater.org/donate" target="_blank" rel="noopener noreferrer">Donate</a>
+            <a href="https://www.charitywater.org/why-water" target="_blank" rel="noopener noreferrer">Why Water</a>
+        </div>
+    </footer>
     
     <script src="script.js"></script>
 </body>

@@ -5,6 +5,60 @@ let gameTimer;
 let score = 0;
 let timeRemaining = 30;
 let winEffectTimeout;
+let currentDifficulty = "normal";
+let reachedMilestones = new Set();
+
+const sounds = {
+  collect: { src: "audio/collect.mp3", volume: 0.45 },
+  miss: { src: "audio/miss.mp3", volume: 0.4 },
+  click: { src: "audio/click.mp3", volume: 0.35 },
+  win: { src: "audio/win.mp3", volume: 0.45 }
+};
+
+const audioPool = Object.fromEntries(
+  Object.entries(sounds).map(([key, config]) => {
+    const audio = new Audio(config.src);
+    audio.preload = "auto";
+    audio.volume = config.volume;
+    return [key, audio];
+  })
+);
+
+const milestoneMessages = [
+  { key: "quarter", ratio: 0.25, text: "Great start! Keep it going." },
+  { key: "half", ratio: 0.5, text: "Halfway there!" },
+  { key: "three-quarters", ratio: 0.75, text: "Almost there. Final push!" }
+];
+
+const difficultyModes = {
+  easy: {
+    label: "Easy",
+    goal: 20,
+    time: 40,
+    spawnInterval: 900,
+    badDropChance: 0.15,
+    dropDuration: 4.4,
+    badDropPenalty: 1
+  },
+  normal: {
+    label: "Normal",
+    goal: 20,
+    time: 30,
+    spawnInterval: 750,
+    badDropChance: 0.25,
+    dropDuration: 4,
+    badDropPenalty: 1
+  },
+  hard: {
+    label: "Hard",
+    goal: 25,
+    time: 30,
+    spawnInterval: 750,
+    badDropChance: 0.35,
+    dropDuration: 3.2,
+    badDropPenalty: 2
+  }
+};
 
 const winningMessages = [
   "Great job! You collected enough water!",
@@ -23,6 +77,8 @@ const scoreEl = document.getElementById("score");
 const timeEl = document.getElementById("time");
 const gameContainer = document.getElementById("game-container");
 const waterCan = document.getElementById("water-can");
+const difficultySelect = document.getElementById("difficulty-select");
+const goalText = document.getElementById("goal-text");
 let messageEl = document.getElementById("game-message");
 let canPositionX = 0;
 const canMoveStep = 55;
@@ -44,25 +100,42 @@ if (waterCan.complete) {
 }
 
 // Wait for button click to start the game
-startBtn.addEventListener("click", startGame);
-resetBtn.addEventListener("click", resetGame);
+startBtn.addEventListener("click", () => {
+  playSound("click");
+  startGame();
+});
+
+resetBtn.addEventListener("click", () => {
+  playSound("click");
+  resetGame();
+});
+
+difficultySelect.addEventListener("change", (event) => {
+  playSound("click");
+  handleDifficultyChange(event);
+});
+
+applyDifficultyUi();
 
 function startGame() {
   if (gameRunning) {
     return;
   }
 
+  const mode = getCurrentMode();
+
   gameRunning = true;
+  reachedMilestones = new Set();
   syncCanPosition();
   score = 0;
-  timeRemaining = 30;
+  timeRemaining = mode.time;
   scoreEl.textContent = score;
   timeEl.textContent = timeRemaining;
   messageEl.textContent = "";
   startBtn.disabled = true;
+  difficultySelect.disabled = true;
 
-  // Create new drops every 750 milliseconds
-  dropMaker = setInterval(createDrop, 750);
+  dropMaker = setInterval(createDrop, mode.spawnInterval);
   gameTimer = setInterval(updateTimer, 1000);
 }
 
@@ -74,15 +147,75 @@ function resetGame() {
   removeWinEffect();
   syncCanPosition();
   score = 0;
-  timeRemaining = 30;
+  reachedMilestones = new Set();
+  timeRemaining = getCurrentMode().time;
   scoreEl.textContent = score;
   timeEl.textContent = timeRemaining;
   messageEl.textContent = "";
   startBtn.disabled = false;
+  difficultySelect.disabled = false;
 
   Array.from(gameContainer.querySelectorAll(".water-drop")).forEach((drop) => {
     drop.remove();
   });
+
+  Array.from(gameContainer.querySelectorAll(".drop-splash")).forEach((splash) => {
+    splash.remove();
+  });
+}
+
+function handleDifficultyChange(event) {
+  const selected = event.target.value;
+
+  if (!difficultyModes[selected]) {
+    return;
+  }
+
+  currentDifficulty = selected;
+  applyDifficultyUi();
+
+  if (!gameRunning) {
+    timeRemaining = getCurrentMode().time;
+    timeEl.textContent = timeRemaining;
+  }
+}
+
+function getCurrentMode() {
+  return difficultyModes[currentDifficulty];
+}
+
+function applyDifficultyUi() {
+  const mode = getCurrentMode();
+  goalText.textContent = `${mode.label} mode: Get ${mode.goal} points in ${mode.time} seconds.`;
+}
+
+function playSound(soundKey) {
+  const baseAudio = audioPool[soundKey];
+
+  if (!baseAudio) {
+    return;
+  }
+
+  const audio = baseAudio.cloneNode();
+  audio.volume = baseAudio.volume;
+
+  audio.play().catch(() => {
+    // Ignore playback issues (autoplay policy, race conditions, etc.)
+  });
+}
+
+function checkMilestones() {
+  const mode = getCurrentMode();
+
+  for (const milestone of milestoneMessages) {
+    const targetScore = Math.max(1, Math.ceil(mode.goal * milestone.ratio));
+    const milestoneId = `${currentDifficulty}-${milestone.key}`;
+
+    if (score >= targetScore && !reachedMilestones.has(milestoneId)) {
+      reachedMilestones.add(milestoneId);
+      messageEl.textContent = `${milestone.text} (${targetScore}/${mode.goal})`;
+    }
+  }
 }
 
 function handleCanMovement(event) {
@@ -123,10 +256,12 @@ function createDrop() {
     return;
   }
 
+  const mode = getCurrentMode();
+
   // Create a new div element that will be our water drop
   const drop = document.createElement("div");
   drop.className = "water-drop";
-  const isBadDrop = Math.random() < 0.25;
+  const isBadDrop = Math.random() < mode.badDropChance;
 
   if (isBadDrop) {
     drop.classList.add("bad-drop");
@@ -145,10 +280,30 @@ function createDrop() {
   drop.style.left = xPosition + "px";
 
   // Make drops fall for 4 seconds
-  drop.style.animationDuration = "4s";
+  drop.style.animationDuration = `${mode.dropDuration}s`;
 
   // Add the new drop to the game screen
   gameContainer.appendChild(drop);
+
+  let resolved = false;
+
+  const resolveDropInteraction = () => {
+    if (resolved || !drop.isConnected) {
+      return;
+    }
+
+    resolved = true;
+    clearInterval(catchCheck);
+
+    const scoreDelta = isBadDrop ? -mode.badDropPenalty : 1;
+    score += scoreDelta;
+    scoreEl.textContent = score;
+    playSound(isBadDrop ? "miss" : "collect");
+    checkMilestones();
+
+    addSplashEffect(drop, isBadDrop);
+    drop.remove();
+  };
 
   let catchCheck = setInterval(() => {
     if (!gameRunning || !drop.isConnected) {
@@ -157,10 +312,7 @@ function createDrop() {
     }
 
     if (isCaughtByWaterCan(drop)) {
-      score += isBadDrop ? -1 : 1;
-      scoreEl.textContent = score;
-      clearInterval(catchCheck);
-      drop.remove();
+      resolveDropInteraction();
     }
   }, 50);
 
@@ -169,23 +321,45 @@ function createDrop() {
       return;
     }
 
-    clearInterval(catchCheck);
-    score += isBadDrop ? -1 : 1;
-    scoreEl.textContent = score;
-    drop.remove();
+    resolveDropInteraction();
   });
 
   // Remove drops that reach the bottom (weren't clicked)
   drop.addEventListener("animationend", () => {
+    if (resolved) {
+      return;
+    }
+
     clearInterval(catchCheck);
 
     if (isCaughtByWaterCan(drop)) {
-      score += isBadDrop ? -1 : 1;
-      scoreEl.textContent = score;
+      resolveDropInteraction();
+      return;
     }
 
+    playSound("miss");
     drop.remove();
   });
+}
+
+function addSplashEffect(drop, isBadDrop) {
+  const dropRect = drop.getBoundingClientRect();
+  const containerRect = gameContainer.getBoundingClientRect();
+  const splash = document.createElement("span");
+
+  splash.className = "drop-splash";
+  if (isBadDrop) {
+    splash.classList.add("bad");
+  }
+
+  splash.style.left = `${dropRect.left - containerRect.left + dropRect.width / 2}px`;
+  splash.style.top = `${dropRect.top - containerRect.top + dropRect.height / 2}px`;
+
+  splash.addEventListener("animationend", () => {
+    splash.remove();
+  });
+
+  gameContainer.appendChild(splash);
 }
 
 function isCaughtByWaterCan(drop) {
@@ -225,17 +399,19 @@ function endGame() {
   clearInterval(dropMaker);
   clearInterval(gameTimer);
   startBtn.disabled = false;
+  difficultySelect.disabled = false;
 
   Array.from(gameContainer.querySelectorAll(".water-drop")).forEach((drop) => {
     drop.remove();
   });
 
-  const isWinner = score >= 20;
+  const isWinner = score >= getCurrentMode().goal;
   const messages = isWinner ? winningMessages : losingMessages;
   const randomMessage = messages[Math.floor(Math.random() * messages.length)];
   messageEl.textContent = randomMessage;
 
   if (isWinner) {
+    playSound("win");
     triggerWinEffect();
   }
 }
